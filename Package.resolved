@@ -1,0 +1,34 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Schedule",
+        "repositoryURL": "https://github.com/vale-cocoa/Schedule.git",
+        "state": {
+          "branch": null,
+          "revision": "930787b32ad15160b7f03c87ed68770c9e2136c4",
+          "version": "1.0.8"
+        }
+      },
+      {
+        "package": "VDLGCDHelpers",
+        "repositoryURL": "https://github.com/vale-cocoa/VDLGCDHelpers.git",
+        "state": {
+          "branch": null,
+          "revision": "edf9c4aa043f5c9c49eb4151d5a9bd098f46591a",
+          "version": "1.0.2"
+        }
+      },
+      {
+        "package": "WebAPICodingOptions",
+        "repositoryURL": "https://github.com/vale-cocoa/WebAPICodingOptions.git",
+        "state": {
+          "branch": null,
+          "revision": "708e8745540c567a9e3904dbc687d6b567739b47",
+          "version": "1.2.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
