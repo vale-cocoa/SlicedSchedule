@@ -8,6 +8,7 @@
 
 import Foundation
 import Schedule
+import VDLGCDHelpers
 
 extension SlicedSchedule: Schedule {
     var lowerBound: Date? { return self.elements.first?.start }
@@ -85,8 +86,25 @@ extension SlicedSchedule: Schedule {
         }
     }
     
-    public func schedule(in dateInterval: DateInterval, queue: DispatchQueue?, then completion: @escaping (Result<[Self.Element], Error>) -> Void) {
-        
+    public func schedule(in dateInterval: DateInterval, queue: DispatchQueue?, then completion: @escaping (Result<[Self.Element], Swift.Error>) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            var result: Result<[DateInterval], Swift.Error> = .success([])
+            if
+                !self.isEmpty,
+                dateInterval.end > self.lowerBound!,
+                dateInterval.start < self.upperBound!,
+                let idxOfFirstIn = self.elements
+                    .firstIndex(where: { $0.start >= dateInterval.start }),
+                let idxOfLastIn = self.elements
+                    .lastIndex(where: { $0.end <= dateInterval.end })
+            {
+                let rangeOfContainedElements = idxOfFirstIn...idxOfLastIn
+                let containedElements = Array(self.elements[rangeOfContainedElements])
+                result = .success(containedElements)
+            }
+            
+            dispatchResultCompletion(result: result, queue: queue, completion: completion)
+        }
     }
     
 }
