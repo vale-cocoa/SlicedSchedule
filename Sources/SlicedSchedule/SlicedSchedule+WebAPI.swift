@@ -11,7 +11,7 @@ import WebAPICodingOptions
 
 extension SlicedSchedule: Codable {
     enum CodingKeys: String, CodingKey {
-        case scheduleElements
+        case schedule
     }
     
     public init(from decoder: Decoder) throws {
@@ -25,7 +25,7 @@ extension SlicedSchedule: Codable {
             }
         } else {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let elements = try container.decode(Array<DateInterval>.self, forKey: .scheduleElements)
+            let elements = try container.decode(Array<DateInterval>.self, forKey: .schedule)
             self = try Self(elements)
         }
     }
@@ -41,7 +41,7 @@ extension SlicedSchedule: Codable {
             }
         } else {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(elements, forKey: .scheduleElements)
+            try container.encode(elements, forKey: .schedule)
         }
     }
     
