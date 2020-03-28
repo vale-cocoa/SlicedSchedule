@@ -359,7 +359,205 @@ final class SliceScheduleScheduleTests: XCTestCase {
     }
     
     // MARK: - schedule(in:queue:then:)
+    func test_scheduleIn_completionExecutes()
+    {
+        // given
+        let exp = expectation(description: "completion executes")
+        var completionExecuted = false
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.start, end: sut.elements.last!.end)
+        sut.schedule(in: dateInterval, queue: nil, then: { _ in
+            completionExecuted = true
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(completionExecuted)
+    }
     
+    func test_scheduleIn_whenQueueNotNil_completionExecutesOnQueue()
+    {
+        // given
+        let exp = expectation(description: "completion executes")
+        var completionThread: Thread!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.start, end: sut.elements.last!.end)
+        sut.schedule(in: dateInterval, queue: .main, then: { _ in
+            completionThread = Thread.current
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertEqual(completionThread, .main)
+    }
+    
+    func test_scheduleIn_whenIsEmpty_returnsEmpty()
+    {
+        // given
+        let exp = expectation(description: "completion executes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: .distantPast, end: .distantFuture)
+        whenIsEmpty()
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func test_scheduleIn_whenDateIntervalStartIsAfterLastElementStart_returnsEmpty()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.last!.end.addingTimeInterval(1.0), end: .distantFuture)
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func test_scheduleIn_whenDateIntervalEndIsBeforeFirstElementStart_returnsEmpty()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: .distantPast, end: sut.elements.first!.start.addingTimeInterval(-1.0))
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func test_scheduleIn_whenDateIntervalOnlyPartiallyIncludeElements_returnsEmpty()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.start.addingTimeInterval(1.0), end: sut.elements[1].end.addingTimeInterval(-1.0))
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func test_scheduleIn_whenDateIntervalDoesntIncludeAnyElement_returnsEmpty()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.end.addingTimeInterval(1.0), end: sut.elements[1].start.addingTimeInterval(-1.0))
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func test_ScheduleIn_whenDateIntervalIncludesOneElementOnly_returnsExpectedResult()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.start, end: sut.elements[1].start.addingTimeInterval(-1.0))
+        let expectedResult = [sut.elements.first!]
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertEqual(result, expectedResult)
+    }
+    
+    func test_scheduleIn_whenDateIntervalIncludesAllElements_returnsExpectedResult()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: .distantPast, end: .distantFuture)
+        let expectedResult = sut.elements
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertEqual(result, expectedResult)
+    }
+    
+    func test_scheduleIn_whenDateIntervalIntersectsTwoElementsWithOneOrMoreInTheirMiddle_returnsExpectedResult()
+    {
+        // given
+        let exp = expectation(description: "completion completes")
+        var result: [DateInterval]!
+        
+        // when
+        let dateInterval = DateInterval(start: sut.elements.first!.start.addingTimeInterval(1.0), end: sut.elements[3].end.addingTimeInterval(-1.0))
+        let expectedResult = [sut.elements[1], sut.elements[2]]
+        sut.schedule(in: dateInterval, queue: nil, then: { compResult in
+            if case .success(let elements) = compResult {
+                result = elements
+            }
+            exp.fulfill()
+        })
+        
+        // then
+        wait(for: [exp], timeout: 0.2)
+        XCTAssertEqual(result, expectedResult)
+    }
     
     static var allTests = [
         ("test_isEmpty_returnsElementsIsEmpty", test_isEmpty_returnsElementsIsEmpty),
@@ -386,6 +584,16 @@ final class SliceScheduleScheduleTests: XCTestCase {
         ("test_scheduleMatching_firstBefore_whenDateIsBetweenTwoElements_returnsElement", test_scheduleMatching_firstBefore_whenDateIsBetweenTwoElements_returnsElement),
         ("test_scheduleMatchingDate_firstBefore_whenDateIsStartDateOfElementAndEndOfPreviousElement_returnsPreviousElement", test_scheduleMatchingDate_firstBefore_whenDateIsStartDateOfElementAndEndOfPreviousElement_returnsPreviousElement),
         ("test_scheduleMatchingDate_firstBefore_whenDateIsEndOfFirstElement_returnsNil", test_scheduleMatchingDate_firstBefore_whenDateIsEndOfFirstElement_returnsNil),
+        ("test_scheduleIn_completionExecutes", test_scheduleIn_completionExecutes),
+        ("test_scheduleIn_whenQueueNotNil_completionExecutesOnQueue", test_scheduleIn_whenQueueNotNil_completionExecutesOnQueue),
+        ("test_scheduleIn_whenIsEmpty_returnsEmpty", test_scheduleIn_whenIsEmpty_returnsEmpty),
+        ("test_scheduleIn_whenDateIntervalStartIsAfterLastElementStart_returnsEmpty", test_scheduleIn_whenDateIntervalStartIsAfterLastElementStart_returnsEmpty),
+        ("test_scheduleIn_whenDateIntervalEndIsBeforeFirstElementStart_returnsEmpty", test_scheduleIn_whenDateIntervalEndIsBeforeFirstElementStart_returnsEmpty),
+        ("test_scheduleIn_whenDateIntervalOnlyPartiallyIncludeElements_returnsEmpty", test_scheduleIn_whenDateIntervalOnlyPartiallyIncludeElements_returnsEmpty),
+        ("test_scheduleIn_whenDateIntervalDoesntIncludeAnyElement_returnsEmpty", test_scheduleIn_whenDateIntervalDoesntIncludeAnyElement_returnsEmpty),
+        ("test_ScheduleIn_whenDateIntervalIncludesOneElementOnly_returnsExpectedResult", test_ScheduleIn_whenDateIntervalIncludesOneElementOnly_returnsExpectedResult),
+        ("test_scheduleIn_whenDateIntervalIncludesAllElements_returnsExpectedResult", test_scheduleIn_whenDateIntervalIncludesAllElements_returnsExpectedResult),
+        ("test_scheduleIn_whenDateIntervalIntersectsTwoElementsWithOneOrMoreInTheirMiddle_returnsExpectedResult", test_scheduleIn_whenDateIntervalIntersectsTwoElementsWithOneOrMoreInTheirMiddle_returnsExpectedResult),
         
     ]
 }

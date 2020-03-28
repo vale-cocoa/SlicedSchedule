@@ -81,13 +81,18 @@ extension SlicedSchedule: Schedule {
             var result: Result<[DateInterval], Swift.Error> = .success([])
             if
                 !self.isEmpty,
-                dateInterval.end > self.lowerBound!,
-                dateInterval.start < self.upperBound!,
+                dateInterval.end >= self.elements.first!.end,
+                dateInterval.start <= self.elements.last!.start,
                 let idxOfFirstIn = self.elements
-                    .firstIndex(where: { $0.start >= dateInterval.start }),
+                    .firstIndex(where: {
+                        $0.start >= dateInterval.start && $0.end <= dateInterval.end
+                    }),
                 let idxOfLastIn = self.elements
-                    .lastIndex(where: { $0.end <= dateInterval.end })
+                    .lastIndex(where: {
+                        $0.start >= dateInterval.start && $0.end <= dateInterval.end
+                    })
             {
+                
                 let rangeOfContainedElements = idxOfFirstIn...idxOfLastIn
                 let containedElements = Array(self.elements[rangeOfContainedElements])
                 result = .success(containedElements)
