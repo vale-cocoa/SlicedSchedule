@@ -15,7 +15,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/vale-cocoa/Schedule.git", from: "1.0.8"),
+        .package(url: "https://github.com/vale-cocoa/Schedule.git", from: "1.2.0"),
         .package(url: "https://github.com/vale-cocoa/VDLGCDHelpers.git", from: "1.0.2"),
         .package(url: "https://github.com/vale-cocoa/WebAPICodingOptions.git", from: "1.2.0"),
     ],
